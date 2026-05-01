@@ -9,15 +9,20 @@ cipher = Fernet(FERNET_KEY)
 
 clients = set()
 
-# Réponse HTTP simple pour Render (GET / HEAD)
+# Réponse HTTP pour Render (HEAD / GET)
 async def http_handler(path, request_headers):
-    if request_headers.get("Upgrade", "").lower() != "websocket":
+    # Render envoie un objet Request, pas un dict
+    upgrade = request_headers.headers.get("Upgrade", "").lower()
+
+    # Si ce n'est PAS une demande WebSocket → répondre HTTP 200
+    if upgrade != "websocket":
         return (
             200,
             Headers({"Content-Type": "text/plain"}),
             b"RedTiger WebSocket Server OK\n"
         )
 
+# Handler WebSocket
 async def ws_handler(websocket, path):
     clients.add(websocket)
     try:
@@ -41,7 +46,7 @@ async def main():
         ws_handler,
         "0.0.0.0",
         port,
-        process_request=http_handler  # <-- FIX MAGIQUE POUR RENDER
+        process_request=http_handler  # FIX Render
     ):
         await asyncio.Future()
 
