@@ -9,9 +9,7 @@ cipher = Fernet(FERNET_KEY)
 
 clients = set()
 
-# Réponse HTTP simple pour Railway (GET / HEAD)
 async def http_handler(path, request_headers):
-    # websockets 12 → request_headers est un dict
     upgrade = request_headers.get("Upgrade", "").lower()
 
     if upgrade != "websocket":
