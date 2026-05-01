@@ -1,6 +1,7 @@
 import os
 import asyncio
 import websockets
+from websockets.http import Headers
 from cryptography.fernet import Fernet
 
 FERNET_KEY = b"r7eERj6U4XJtS0R8FPq-9odUIDnoRpi5SUvxwHU5Op8="
@@ -8,16 +9,23 @@ cipher = Fernet(FERNET_KEY)
 
 clients = set()
 
-async def handler(websocket, path):
+# Réponse HTTP simple pour Render (GET / HEAD)
+async def http_handler(path, request_headers):
+    if request_headers.get("Upgrade", "").lower() != "websocket":
+        return (
+            200,
+            Headers({"Content-Type": "text/plain"}),
+            b"RedTiger WebSocket Server OK\n"
+        )
+
+async def ws_handler(websocket, path):
     clients.add(websocket)
     try:
-        async for message in websocket:
-            # message = texte chiffré (Fernet base64 en str)
-            # on le relaye tel quel
+        async for encrypted_msg in websocket:
             dead = []
             for ws in clients:
                 try:
-                    await ws.send(message)
+                    await ws.send(encrypted_msg)
                 except:
                     dead.append(ws)
             for ws in dead:
@@ -27,9 +35,15 @@ async def handler(websocket, path):
 
 async def main():
     port = int(os.environ.get("PORT", 10000))
-    async with websockets.serve(handler, "0.0.0.0", port):
-        print(f"WebSocket server listening on 0.0.0.0:{port}")
-        await asyncio.Future()  # run forever
+    print(f"WebSocket server running on port {port}")
+
+    async with websockets.serve(
+        ws_handler,
+        "0.0.0.0",
+        port,
+        process_request=http_handler  # <-- FIX MAGIQUE POUR RENDER
+    ):
+        await asyncio.Future()
 
 if __name__ == "__main__":
     asyncio.run(main())
