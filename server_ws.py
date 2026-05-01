@@ -11,6 +11,7 @@ clients = set()
 
 # Réponse HTTP simple pour Railway (GET / HEAD)
 async def http_handler(path, request_headers):
+    # websockets 12 → request_headers est un dict
     upgrade = request_headers.get("Upgrade", "").lower()
 
     if upgrade != "websocket":
@@ -37,7 +38,7 @@ async def ws_handler(websocket, path):
         clients.discard(websocket)
 
 async def main():
-    port = int(os.environ.get("PORT", 8000))
+    port = int(os.environ.get("PORT", 8080))
     print(f"WebSocket server running on port {port}")
 
     async with websockets.serve(
