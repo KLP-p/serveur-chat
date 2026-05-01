@@ -24,6 +24,7 @@ async def http_handler(path, request_headers):
 
 # Handler WebSocket
 async def ws_handler(websocket, path):
+    print("Client WebSocket connecté !")
     clients.add(websocket)
     try:
         async for encrypted_msg in websocket:
@@ -46,7 +47,8 @@ async def main():
         ws_handler,
         "0.0.0.0",
         port,
-        process_request=http_handler  # FIX Render
+        process_request=http_handler,
+        path="/ws"   # <── OBLIGATOIRE POUR RENDER
     ):
         await asyncio.Future()
 
