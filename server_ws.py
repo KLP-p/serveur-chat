@@ -11,7 +11,7 @@ clients = set()
 
 # Réponse HTTP pour Render (HEAD / GET)
 async def http_handler(path, request_headers):
-    # Render envoie un objet Request, pas un dict
+    # websockets 16 → request_headers est un objet Request
     upgrade = request_headers.headers.get("Upgrade", "").lower()
 
     # Si ce n'est PAS une demande WebSocket → répondre HTTP 200
@@ -23,7 +23,7 @@ async def http_handler(path, request_headers):
         )
 
 # Handler WebSocket
-async def ws_handler(websocket, path):
+async def ws_handler(websocket):
     print("Client WebSocket connecté !")
     clients.add(websocket)
     try:
@@ -47,8 +47,7 @@ async def main():
         ws_handler,
         "0.0.0.0",
         port,
-        process_request=http_handler,
-        path="/ws"   # <── OBLIGATOIRE POUR RENDER
+        process_request=http_handler  # FIX Render
     ):
         await asyncio.Future()
 
